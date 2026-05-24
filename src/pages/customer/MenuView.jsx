@@ -21,9 +21,21 @@ export default function MenuView() {
     if (!weeks) { setLoading(false); return }
     setWeek(weeks)
 
-    if (weeks.status === 'closed' || weeks.status === 'archived' || (weeks.order_deadline && isAfter(new Date(), parseISO(weeks.order_deadline)))) {
+    if (weeks.status === 'closed' || weeks.status === 'archived') {
       navigate('/closed')
       return
+    }
+
+    // Check if deadline has passed (deadline is stored as YYYY-MM-DDTHH:mm local time string)
+    if (weeks.order_deadline) {
+      const [datePart, timePart] = weeks.order_deadline.split('T')
+      const deadlineTime = new Date(`${datePart}T${timePart}`)
+      if (isNaN(deadlineTime.getTime())) {
+        // Invalid deadline format, allow ordering
+      } else if (isAfter(new Date(), deadlineTime)) {
+        navigate('/closed')
+        return
+      }
     }
 
     const { data: menuItems } = await supabase.from('menu_items').select('*').eq('week_id', weeks.id).order('pickup_day')

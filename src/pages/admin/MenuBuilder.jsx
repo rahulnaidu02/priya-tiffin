@@ -20,7 +20,8 @@ function emptyItem(pickupDay) {
 export default function MenuBuilder() {
   const [week, setWeek] = useState(null)
   const [items, setItems] = useState([])
-  const [deadline, setDeadline] = useState('')
+  const [deadlineDate, setDeadlineDate] = useState('')
+  const [deadlineTime, setDeadlineTime] = useState('18:00')
   const [venmo, setVenmo] = useState('')
   const [zelle, setZelle] = useState('')
   const [loading, setLoading] = useState(true)
@@ -28,6 +29,7 @@ export default function MenuBuilder() {
   const [shareUrl, setShareUrl] = useState('')
   const [library, setLibrary] = useState([])
   const [showLibrary, setShowLibrary] = useState(false)
+  const [uploadingIdx, setUploadingIdx] = useState(null)
   const weekDates = getWeekDates()
 
   useEffect(() => { loadWeek() }, [])
@@ -44,7 +46,11 @@ export default function MenuBuilder() {
     if (weeks?.length) {
       const w = weeks[0]
       setWeek(w)
-      setDeadline(w.order_deadline ? w.order_deadline.slice(0, 16) : '')
+      if (w.order_deadline) {
+        const [date, time] = w.order_deadline.split('T')
+        setDeadlineDate(date)
+        setDeadlineTime(time || '18:00')
+      }
       setVenmo(w.payment_venmo || '')
       setZelle(w.payment_zelle || '')
       if (w.status === 'active') setShareUrl(`${window.location.origin}/m/${w.share_token}`)
@@ -79,17 +85,44 @@ export default function MenuBuilder() {
   }
 
   async function handleImageUpload(idx, files) {
-    const item = items[idx]
-    const compressed = await Promise.all(Array.from(files).slice(0, 3 - item.image_urls.length).map(compressImage))
-    const urls = await Promise.all(compressed.map(async file => {
-      const path = `items/${Date.now()}_${file.name}`
-      const { error } = await supabase.storage.from('tiffin-images').upload(path, file, { upsert: true })
-      if (error) throw error
-      const { data } = supabase.storage.from('tiffin-images').getPublicUrl(path)
-      return data.publicUrl
-    }))
-    updateItem(idx, 'image_urls', [...item.image_urls, ...urls])
-    toast.success('Images uploaded')
+    if (!files || files.length === 0) return
+    setUploadingIdx(idx)
+    try {
+      const item = items[idx]
+      const maxNewImages = 3 - item.image_urls.length
+      if (maxNewImages <= 0) { toast.error('Max 3 images per item'); setUploadingIdx(null); return }
+
+      const filesToUpload = Array.from(files).slice(0, maxNewImages)
+      const compressed = await Promise.all(filesToUpload.map(compressImage))
+
+      const urls = await Promise.all(compressed.map(async (file, fileIdx) => {
+        try {
+          const path = `items/${Date.now()}_${fileIdx}_${file.name}`
+          const { error } = await supabase.storage.from('tiffin-images').upload(path, file, { upsert: true })
+          if (error) {
+            console.error('Upload error:', error)
+            throw new Error(error.message || 'Upload failed')
+          }
+          const { data } = supabase.storage.from('tiffin-images').getPublicUrl(path)
+          return data.publicUrl
+        } catch (e) {
+          console.error('Image upload error:', e)
+          toast.error(`Failed to upload image: ${e.message}`)
+          return null
+        }
+      }))
+
+      const validUrls = urls.filter(url => url !== null)
+      if (validUrls.length === 0) { setUploadingIdx(null); return }
+
+      updateItem(idx, 'image_urls', [...item.image_urls, ...validUrls])
+      toast.success(`${validUrls.length} image${validUrls.length > 1 ? 's' : ''} uploaded ✓`)
+      setUploadingIdx(null)
+    } catch (error) {
+      console.error('Image upload error:', error)
+      toast.error('Image upload failed. Check your internet connection.')
+      setUploadingIdx(null)
+    }
   }
 
   async function saveItems() {
@@ -112,9 +145,10 @@ export default function MenuBuilder() {
       }
     }
 
-    // Update week settings
+    // Update week settings - store as simple datetime string (no timezone conversion)
+    const orderDeadline = deadlineDate && deadlineTime ? `${deadlineDate}T${deadlineTime}` : null
     await supabase.from('weeks').update({
-      order_deadline: deadline || null,
+      order_deadline: orderDeadline,
       payment_venmo: venmo,
       payment_zelle: zelle,
     }).eq('id', week.id)
@@ -124,7 +158,7 @@ export default function MenuBuilder() {
 
   async function publish() {
     if (!items.filter(i => i.name).length) return toast.error('Add at least one item first')
-    if (!deadline) return toast.error('Set an order deadline')
+    if (!deadlineDate || !deadlineTime) return toast.error('Set an order deadline date and time')
     setPublishing(true)
     await saveItems()
     const { data } = await supabase.from('weeks').update({ status: 'active' }).eq('id', week.id).select().single()
@@ -179,9 +213,22 @@ export default function MenuBuilder() {
       {/* Order deadline + payment */}
       <div className="bg-white rounded-2xl p-4 mb-4 shadow-sm space-y-3">
         <div>
-          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Order Deadline</label>
-          <input type="datetime-local" value={deadline} onChange={e => setDeadline(e.target.value)}
-            className="w-full mt-1 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-orange-400" />
+          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Order Deadline (Your Local Time)</label>
+          <div className="grid grid-cols-2 gap-2 mt-1">
+            <div>
+              <label className="text-xs text-gray-400 block mb-1">Date</label>
+              <input type="date" value={deadlineDate} onChange={e => setDeadlineDate(e.target.value)}
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-orange-400" />
+            </div>
+            <div>
+              <label className="text-xs text-gray-400 block mb-1">Time</label>
+              <input type="time" value={deadlineTime} onChange={e => setDeadlineTime(e.target.value)}
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-orange-400" />
+            </div>
+          </div>
+          {deadlineDate && deadlineTime && (
+            <p className="text-xs text-gray-400 mt-2">Orders close on {new Date(`${deadlineDate}T${deadlineTime}`).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</p>
+          )}
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div>
@@ -211,8 +258,12 @@ export default function MenuBuilder() {
                 <div className="flex gap-2 mb-2">
                   <input value={item.name} onChange={e => updateItem(idx, 'name', e.target.value)}
                     placeholder="Item name" className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-orange-400" />
-                  <input value={item.price} onChange={e => updateItem(idx, 'price', e.target.value)}
-                    placeholder="$0" type="number" className="w-20 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-orange-400" />
+                  <div className="relative w-24">
+                    <span className="absolute left-3 top-2.5 text-sm text-gray-400 pointer-events-none">$</span>
+                    <input value={item.price} onChange={e => updateItem(idx, 'price', e.target.value)}
+                      placeholder="0" type="number" step="0.01" min="0"
+                      className="w-full border border-gray-200 rounded-xl pl-6 pr-3 py-2 text-sm outline-none focus:ring-2 focus:ring-orange-400" />
+                  </div>
                   <button onClick={() => removeItem(idx)} className="p-2 text-red-400 hover:bg-red-50 rounded-xl">
                     <Trash2 size={16} />
                   </button>
@@ -242,9 +293,13 @@ export default function MenuBuilder() {
                     </div>
                   ))}
                   {item.image_urls.length < 3 && (
-                    <label className="w-16 h-16 border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center cursor-pointer hover:border-orange-400 transition">
-                      <ImagePlus size={20} className="text-gray-300" />
-                      <input type="file" accept="image/*" multiple className="hidden" onChange={e => handleImageUpload(idx, e.target.files)} />
+                    <label className={`w-16 h-16 border-2 border-dashed rounded-lg flex items-center justify-center transition ${uploadingIdx === idx ? 'border-orange-400 bg-orange-50' : 'border-gray-200 hover:border-orange-400 cursor-pointer'}`}>
+                      {uploadingIdx === idx ? (
+                        <div className="text-orange-500 text-xs font-bold">Uploading...</div>
+                      ) : (
+                        <ImagePlus size={20} className="text-gray-300" />
+                      )}
+                      <input type="file" accept="image/*" multiple className="hidden" onChange={e => handleImageUpload(idx, e.target.files)} disabled={uploadingIdx !== null} />
                     </label>
                   )}
                 </div>
