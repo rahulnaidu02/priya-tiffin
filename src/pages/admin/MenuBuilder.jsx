@@ -47,9 +47,12 @@ export default function MenuBuilder() {
       const w = weeks[0]
       setWeek(w)
       if (w.order_deadline) {
-        const [date, time] = w.order_deadline.split('T')
-        setDeadlineDate(date)
-        setDeadlineTime(time || '18:00')
+        const dt = new Date(w.order_deadline)
+        if (!isNaN(dt.getTime())) {
+          const pad = n => n.toString().padStart(2, '0')
+          setDeadlineDate(`${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`)
+          setDeadlineTime(`${pad(dt.getHours())}:${pad(dt.getMinutes())}`)
+        }
       }
       setVenmo(w.payment_venmo || '')
       setZelle(w.payment_zelle || '')
@@ -145,8 +148,10 @@ export default function MenuBuilder() {
       }
     }
 
-    // Update week settings - store as simple datetime string (no timezone conversion)
-    const orderDeadline = deadlineDate && deadlineTime ? `${deadlineDate}T${deadlineTime}` : null
+    // Convert local time to UTC ISO string so Supabase stores correct timezone-aware timestamp
+    const orderDeadline = deadlineDate && deadlineTime
+      ? new Date(`${deadlineDate}T${deadlineTime}`).toISOString()
+      : null
     await supabase.from('weeks').update({
       order_deadline: orderDeadline,
       payment_venmo: venmo,

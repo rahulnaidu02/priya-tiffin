@@ -147,18 +147,18 @@ export default function OrderForm() {
 
         {/* SMS reminder toggle */}
         <div className="bg-white rounded-2xl p-4 shadow-sm">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
             <div className="flex-1">
               <h2 className="font-bold text-gray-800">Pickup Reminders</h2>
               <p className="text-xs text-gray-400 mt-0.5">
-                {smsReminders ? 'You\'ll get an SMS before your pickup day' : 'No reminders — you\'re on your own!'}
+                {smsReminders ? 'SMS reminder before your pickup day' : 'No reminders'}
               </p>
             </div>
             <button
               type="button"
               onClick={() => setSmsReminders(r => !r)}
-              className={`relative w-12 h-6 rounded-full transition-colors duration-200 flex-shrink-0 ${smsReminders ? 'bg-orange-500' : 'bg-gray-200'}`}>
-              <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${smsReminders ? 'translate-x-6' : 'translate-x-0.5'}`} />
+              className={`flex-shrink-0 w-11 h-6 rounded-full transition-colors duration-200 flex items-center px-0.5 ${smsReminders ? 'bg-orange-500 justify-end' : 'bg-gray-200 justify-start'}`}>
+              <span className="w-5 h-5 bg-white rounded-full shadow-sm block" />
             </button>
           </div>
         </div>
