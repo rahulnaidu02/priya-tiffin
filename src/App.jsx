@@ -5,6 +5,7 @@ import Dashboard from './pages/admin/Dashboard'
 import PaymentTracker from './pages/admin/PaymentTracker'
 import ArchivePage from './pages/admin/ArchivePage'
 import DevInfo from './pages/admin/DevInfo'
+import AskAI from './pages/admin/AskAI'
 import MenuView from './pages/customer/MenuView'
 import OrderForm from './pages/customer/OrderForm'
 import OrderConfirm from './pages/customer/OrderConfirm'
@@ -31,6 +32,7 @@ export default function App() {
           <Route path="payments" element={<PaymentTracker />} />
           <Route path="archive" element={<ArchivePage />} />
           <Route path="dev" element={<DevInfo />} />
+          <Route path="ask" element={<AskAI />} />
         </Route>
 
         {/* Default */}

@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, ChefHat, CreditCard, Archive, LogOut, Terminal } from 'lucide-react'
+import { LayoutDashboard, ChefHat, CreditCard, Archive, LogOut, Terminal, Sparkles } from 'lucide-react'
 import { isAdminAuthed, clearAdminAuth } from '../lib/utils'
 import { useEffect } from 'react'
 
@@ -32,6 +32,12 @@ export default function AdminLayout() {
           <span className="text-xs bg-orange-600 px-2 py-0.5 rounded-full ml-1">Admin</span>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate('/admin/ask')}
+            className="flex items-center gap-1 bg-orange-600 hover:bg-orange-700 transition px-2.5 py-1.5 rounded-lg text-xs font-semibold">
+            <Sparkles size={13} />
+            Ask AI
+          </button>
           <button
             onClick={() => navigate('/admin/dev')}
             className="flex items-center gap-1 bg-orange-600 hover:bg-orange-700 transition px-2.5 py-1.5 rounded-lg text-xs font-semibold">

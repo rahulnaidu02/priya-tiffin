@@ -83,6 +83,43 @@ The goal was to replace that entire workflow with a single shareable link.
 
 ---
 
+## MCP and AI Integration
+
+Two layers, both pointing at the same Supabase database.
+
+### Layer 1: Supabase MCP in Claude Code
+
+Lets the developer query the live database from any Claude Code conversation.
+No copy-paste, no SQL editor.
+
+Setup (one-time):
+1. Get the Supabase service role key from Settings -> API
+2. Add an MCP server entry to Claude Code settings
+3. Restart Claude Code
+
+Example queries from Claude:
+- "How many orders this week?"
+- "Which customer has ordered the most across all weeks?"
+- "Show me unpaid orders"
+
+### Layer 2: Ask AI tab in the admin app
+
+Lives at /admin/ask. Same questions, but accessible from the browser.
+
+How it works:
+1. User types a question in the chat UI
+2. Frontend posts to /api/ask (Vercel serverless function)
+3. Function pulls all rows from weeks, orders, order_items, menu_items, item_library
+4. Sends the data as context to Anthropic Claude with the user's question
+5. Claude answers in plain English, frontend renders the response
+
+Env vars required in Vercel:
+- SUPABASE_URL (already set)
+- SUPABASE_SERVICE_KEY (service role, not anon)
+- ANTHROPIC_API_KEY
+
+---
+
 ## Timeline
 
 Built in a single session — Vite scaffold to live deployed PWA with real orders.
