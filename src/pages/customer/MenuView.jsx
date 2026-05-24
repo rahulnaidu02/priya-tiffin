@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { formatDate, formatTime, groupByDay } from '../../lib/utils'
-import { ShoppingBag, Plus, Minus, ChevronLeft, ChevronRight } from 'lucide-react'
-import { isAfter, parseISO } from 'date-fns'
+import { ShoppingBag, Plus, Minus } from 'lucide-react'
+import { isAfter } from 'date-fns'
 
 export default function MenuView() {
   const { token } = useParams()
@@ -12,46 +12,47 @@ export default function MenuView() {
   const [items, setItems] = useState([])
   const [cart, setCart] = useState({})
   const [loading, setLoading] = useState(true)
-  const [imgIndex, setImgIndex] = useState({})
 
   useEffect(() => { loadMenu() }, [token])
 
   async function loadMenu() {
-    const { data: weeks } = await supabase.from('weeks').select('*').eq('share_token', token).single()
+    const { data: weeks } = await supabase
+      .from('weeks').select('*').eq('share_token', token).single()
     if (!weeks) { setLoading(false); return }
     setWeek(weeks)
 
     if (weeks.status === 'closed' || weeks.status === 'archived') {
-      navigate('/closed')
-      return
+      navigate('/closed'); return
     }
-
-    // Check if deadline has passed (deadline is stored as YYYY-MM-DDTHH:mm local time string)
     if (weeks.order_deadline) {
       const [datePart, timePart] = weeks.order_deadline.split('T')
-      const deadlineTime = new Date(`${datePart}T${timePart}`)
-      if (isNaN(deadlineTime.getTime())) {
-        // Invalid deadline format, allow ordering
-      } else if (isAfter(new Date(), deadlineTime)) {
-        navigate('/closed')
-        return
+      const deadline = new Date(`${datePart}T${timePart}`)
+      if (!isNaN(deadline.getTime()) && isAfter(new Date(), deadline)) {
+        navigate('/closed'); return
       }
     }
 
-    const { data: menuItems } = await supabase.from('menu_items').select('*').eq('week_id', weeks.id).order('pickup_day')
+    const { data: menuItems } = await supabase
+      .from('menu_items').select('*').eq('week_id', weeks.id).order('pickup_day')
     setItems(menuItems || [])
     setLoading(false)
   }
 
   const totalItems = Object.values(cart).reduce((s, q) => s + q, 0)
-  const totalAmount = items.reduce((s, item) => s + (parseFloat(item.price) || 0) * (cart[item.id] || 0), 0)
+  const totalAmount = items.reduce((s, item) =>
+    s + (parseFloat(item.price) || 0) * (cart[item.id] || 0), 0)
 
   function addItem(id) {
     if (totalItems >= 3) return
     setCart(c => ({ ...c, [id]: (c[id] || 0) + 1 }))
   }
   function removeItem(id) {
-    setCart(c => { const n = { ...c }; if (n[id] > 1) n[id]--; else delete n[id]; return n })
+    setCart(c => {
+      const n = { ...c }
+      if (n[id] > 1) n[id]--
+      else delete n[id]
+      return n
+    })
   }
 
   function goToOrder() {
@@ -59,13 +60,17 @@ export default function MenuView() {
       const item = items.find(i => i.id === id)
       return { id, qty, name: item.name, price: item.price, pickup_day: item.pickup_day }
     })
-    sessionStorage.setItem('priya_cart', JSON.stringify({ weekId: week.id, weekTitle: week.title, items: cartItems, total: totalAmount, venmo: week.payment_venmo, zelle: week.payment_zelle }))
+    sessionStorage.setItem('priya_cart', JSON.stringify({
+      weekId: week.id, weekTitle: week.title,
+      items: cartItems, total: totalAmount,
+      venmo: week.payment_venmo, zelle: week.payment_zelle
+    }))
     navigate(`/m/${token}/order`)
   }
 
   if (loading) return (
     <div className="min-h-dvh bg-orange-50 flex items-center justify-center">
-      <div className="text-orange-400 text-sm">Loading menu...</div>
+      <div className="text-orange-400">Loading menu...</div>
     </div>
   )
 
@@ -81,71 +86,97 @@ export default function MenuView() {
   const byDay = groupByDay(items)
 
   return (
-    <div className="min-h-dvh bg-orange-50 pb-28">
-      {/* Header */}
-      <div className="bg-gradient-to-b from-orange-500 to-orange-400 text-white px-4 pt-10 pb-6">
-        <div className="text-3xl mb-1">🍱</div>
-        <h1 className="text-2xl font-bold">Priya's Tiffin</h1>
-        <p className="text-orange-100 text-sm mt-1">{week.title}</p>
-        {week.order_deadline && (
-          <p className="text-orange-200 text-xs mt-1">
-            Order by {new Date(week.order_deadline).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
-          </p>
-        )}
+    <div className="min-h-dvh bg-gray-50 pb-32">
+      {/* Hero header */}
+      <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white px-4 pt-10 pb-8">
+        <div className="max-w-lg mx-auto">
+          <div className="text-4xl mb-2">🍱</div>
+          <h1 className="text-2xl font-bold">Priya's Tiffin</h1>
+          <p className="text-orange-100 text-sm mt-1">{week.title}</p>
+          {week.order_deadline && (
+            <div className="mt-3 inline-flex items-center gap-1.5 bg-orange-600/50 rounded-full px-3 py-1">
+              <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+              <span className="text-xs text-orange-100">
+                Order by {new Date(`${week.order_deadline}`).toLocaleString('en-US', {
+                  weekday: 'short', month: 'short', day: 'numeric',
+                  hour: 'numeric', minute: '2-digit'
+                })}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Max items notice */}
+      <div className="max-w-lg mx-auto px-4 pt-3">
+        <p className="text-xs text-gray-400 text-center">Select up to 3 items across all days</p>
       </div>
 
       {/* Menu grouped by day */}
-      <div className="px-4 pt-4 space-y-4">
+      <div className="max-w-lg mx-auto px-4 pt-3 space-y-6">
         {Object.entries(byDay).map(([day, dayItems]) => (
           <div key={day}>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="font-bold text-gray-700">{formatDate(day)}</span>
-              {dayItems[0]?.pickup_time_start && (
-                <span className="text-xs text-gray-400">Pickup: {formatTime(dayItems[0].pickup_time_start)} – {formatTime(dayItems[0].pickup_time_end)}</span>
-              )}
+            {/* Day header */}
+            <div className="flex items-center gap-3 mb-3">
+              <div>
+                <p className="font-bold text-gray-800 text-sm">{formatDate(day)}</p>
+                {dayItems[0]?.pickup_time_start && (
+                  <p className="text-xs text-gray-400">
+                    Pickup {formatTime(dayItems[0].pickup_time_start)} – {formatTime(dayItems[0].pickup_time_end)}
+                  </p>
+                )}
+              </div>
             </div>
-            <div className="space-y-3">
+
+            {/* Item cards - DoorDash style */}
+            <div className="space-y-2">
               {dayItems.map(item => {
                 const qty = cart[item.id] || 0
-                const imgs = item.image_urls || []
-                const imgIdx = imgIndex[item.id] || 0
+                const atMax = totalItems >= 3 && !qty
                 return (
-                  <div key={item.id} className="bg-white rounded-2xl overflow-hidden shadow-sm">
-                    {imgs.length > 0 && (
-                      <div className="relative">
-                        <img src={imgs[imgIdx]} alt={item.name} className="w-full h-44 object-cover" />
-                        {imgs.length > 1 && (
-                          <div className="absolute inset-0 flex items-center justify-between px-2">
-                            <button onClick={() => setImgIndex(p => ({ ...p, [item.id]: (imgIdx - 1 + imgs.length) % imgs.length }))}
-                              className="bg-black/30 text-white rounded-full p-1"><ChevronLeft size={14} /></button>
-                            <button onClick={() => setImgIndex(p => ({ ...p, [item.id]: (imgIdx + 1) % imgs.length }))}
-                              className="bg-black/30 text-white rounded-full p-1"><ChevronRight size={14} /></button>
-                          </div>
-                        )}
+                  <div key={item.id}
+                    className={`bg-white rounded-2xl overflow-hidden shadow-sm flex items-center gap-3 p-3 transition ${atMax ? 'opacity-50' : ''}`}>
+                    {/* Thumbnail */}
+                    {item.image_urls?.[0] ? (
+                      <img src={item.image_urls[0]} alt={item.name}
+                        className="w-20 h-20 rounded-xl object-cover flex-shrink-0" />
+                    ) : (
+                      <div className="w-20 h-20 rounded-xl bg-orange-50 flex items-center justify-center flex-shrink-0">
+                        <span className="text-3xl">🍛</span>
                       </div>
                     )}
-                    <div className="p-4">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1">
-                          <p className="font-semibold text-gray-800">{item.name}</p>
-                          {item.description && <p className="text-sm text-gray-500 mt-1">{item.description}</p>}
-                          <p className="text-orange-500 font-bold mt-2">${parseFloat(item.price).toFixed(2)}</p>
-                        </div>
-                        <div className="flex items-center gap-2 mt-1">
-                          {qty > 0 ? (
-                            <>
-                              <button onClick={() => removeItem(item.id)} className="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center">
-                                <Minus size={14} />
-                              </button>
-                              <span className="w-5 text-center font-bold text-gray-800">{qty}</span>
-                            </>
-                          ) : null}
-                          <button onClick={() => addItem(item.id)} disabled={totalItems >= 3}
-                            className={`w-8 h-8 rounded-full flex items-center justify-center transition ${totalItems >= 3 && !qty ? 'bg-gray-100 text-gray-300' : 'bg-orange-500 text-white active:scale-90'}`}>
-                            <Plus size={14} />
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-800 text-sm leading-tight">{item.name}</p>
+                      {item.description && (
+                        <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{item.description}</p>
+                      )}
+                      <p className="text-orange-500 font-bold text-sm mt-1">
+                        ${parseFloat(item.price).toFixed(2)}
+                      </p>
+                    </div>
+
+                    {/* Qty controls */}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {qty > 0 ? (
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => removeItem(item.id)}
+                            className="w-7 h-7 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center active:scale-90 transition">
+                            <Minus size={12} />
+                          </button>
+                          <span className="w-4 text-center font-bold text-gray-800 text-sm">{qty}</span>
+                          <button onClick={() => addItem(item.id)} disabled={atMax}
+                            className="w-7 h-7 rounded-full bg-orange-500 text-white flex items-center justify-center active:scale-90 transition disabled:opacity-40">
+                            <Plus size={12} />
                           </button>
                         </div>
-                      </div>
+                      ) : (
+                        <button onClick={() => addItem(item.id)} disabled={atMax}
+                          className="w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center shadow-md active:scale-90 transition disabled:opacity-40 disabled:shadow-none">
+                          <Plus size={16} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 )
@@ -155,20 +186,18 @@ export default function MenuView() {
         ))}
       </div>
 
-      {totalItems === 0 && items.length > 0 && (
-        <p className="text-center text-xs text-gray-400 mt-4">Select up to 3 items</p>
-      )}
-
-      {/* Cart bar */}
+      {/* Sticky cart button */}
       {totalItems > 0 && (
-        <div className="fixed bottom-4 left-4 right-4">
+        <div className="fixed bottom-6 left-4 right-4 max-w-lg mx-auto">
           <button onClick={goToOrder}
-            className="w-full bg-orange-500 text-white rounded-2xl py-4 font-bold shadow-lg flex items-center justify-between px-5 active:scale-95 transition">
+            className="w-full bg-orange-500 text-white rounded-2xl py-4 font-bold shadow-xl flex items-center justify-between px-5 active:scale-95 transition">
             <div className="flex items-center gap-2">
-              <ShoppingBag size={20} />
-              <span>{totalItems} item{totalItems > 1 ? 's' : ''}</span>
+              <div className="bg-orange-600 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+                {totalItems}
+              </div>
+              <span>View Order</span>
             </div>
-            <span>Place Order · ${totalAmount.toFixed(2)}</span>
+            <span className="font-bold">${totalAmount.toFixed(2)} →</span>
           </button>
         </div>
       )}
