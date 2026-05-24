@@ -4,6 +4,7 @@ import MenuBuilder from './pages/admin/MenuBuilder'
 import Dashboard from './pages/admin/Dashboard'
 import PaymentTracker from './pages/admin/PaymentTracker'
 import ArchivePage from './pages/admin/ArchivePage'
+import DevInfo from './pages/admin/DevInfo'
 import MenuView from './pages/customer/MenuView'
 import OrderForm from './pages/customer/OrderForm'
 import OrderConfirm from './pages/customer/OrderConfirm'
@@ -29,6 +30,7 @@ export default function App() {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="payments" element={<PaymentTracker />} />
           <Route path="archive" element={<ArchivePage />} />
+          <Route path="dev" element={<DevInfo />} />
         </Route>
 
         {/* Default */}
