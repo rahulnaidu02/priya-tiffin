@@ -43,7 +43,7 @@ export default function MenuView() {
     s + (parseFloat(item.price) || 0) * (cart[item.id] || 0), 0)
 
   function addItem(id) {
-    if (totalItems >= 3) return
+    if ((cart[id] || 0) >= 3) return   // max 3 of the same item
     setCart(c => ({ ...c, [id]: (c[id] || 0) + 1 }))
   }
   function removeItem(id) {
@@ -107,9 +107,9 @@ export default function MenuView() {
         </div>
       </div>
 
-      {/* Max items notice */}
+      {/* Subtitle */}
       <div className="max-w-lg mx-auto px-4 pt-3">
-        <p className="text-xs text-gray-400 text-center">Select up to 3 items across all days</p>
+        <p className="text-xs text-gray-400 text-center">Order from any day · Max 3 of the same item</p>
       </div>
 
       {/* Menu grouped by day */}
@@ -132,10 +132,10 @@ export default function MenuView() {
             <div className="space-y-2">
               {dayItems.map(item => {
                 const qty = cart[item.id] || 0
-                const atMax = totalItems >= 3 && !qty
+                const atItemMax = qty >= 3
                 return (
                   <div key={item.id}
-                    className={`bg-white rounded-2xl overflow-hidden shadow-sm flex items-center gap-3 p-3 transition ${atMax ? 'opacity-50' : ''}`}>
+                    className="bg-white rounded-2xl overflow-hidden shadow-sm flex items-center gap-3 p-3 transition">
                     {/* Thumbnail */}
                     {item.image_urls?.[0] ? (
                       <img src={item.image_urls[0]} alt={item.name}
@@ -160,21 +160,21 @@ export default function MenuView() {
                     {/* Qty controls */}
                     <div className="flex items-center gap-2 flex-shrink-0">
                       {qty > 0 ? (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 bg-orange-50 rounded-full px-2 py-1">
                           <button onClick={() => removeItem(item.id)}
-                            className="w-7 h-7 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center active:scale-90 transition">
+                            className="w-7 h-7 rounded-full bg-white text-orange-600 flex items-center justify-center shadow-sm active:scale-90 transition">
                             <Minus size={12} />
                           </button>
-                          <span className="w-4 text-center font-bold text-gray-800 text-sm">{qty}</span>
-                          <button onClick={() => addItem(item.id)} disabled={atMax}
-                            className="w-7 h-7 rounded-full bg-orange-500 text-white flex items-center justify-center active:scale-90 transition disabled:opacity-40">
+                          <span className="w-5 text-center font-bold text-orange-600 text-sm">{qty}</span>
+                          <button onClick={() => addItem(item.id)} disabled={atItemMax}
+                            className="w-7 h-7 rounded-full bg-orange-500 text-white flex items-center justify-center shadow-sm active:scale-90 transition disabled:opacity-40">
                             <Plus size={12} />
                           </button>
                         </div>
                       ) : (
-                        <button onClick={() => addItem(item.id)} disabled={atMax}
-                          className="w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center shadow-md active:scale-90 transition disabled:opacity-40 disabled:shadow-none">
-                          <Plus size={16} />
+                        <button onClick={() => addItem(item.id)}
+                          className="w-9 h-9 rounded-full bg-orange-500 text-white flex items-center justify-center shadow-lg active:scale-90 transition">
+                          <Plus size={18} />
                         </button>
                       )}
                     </div>
@@ -186,19 +186,20 @@ export default function MenuView() {
         ))}
       </div>
 
-      {/* Sticky cart button */}
+      {/* Sticky Place Order button */}
       {totalItems > 0 && (
-        <div className="fixed bottom-6 left-4 right-4 max-w-lg mx-auto">
-          <button onClick={goToOrder}
-            className="w-full bg-orange-500 text-white rounded-2xl py-4 font-bold shadow-xl flex items-center justify-between px-5 active:scale-95 transition">
-            <div className="flex items-center gap-2">
-              <div className="bg-orange-600 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
-                {totalItems}
-              </div>
-              <span>View Order</span>
+        <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-gray-100 px-4 py-4">
+          <div className="max-w-lg mx-auto">
+            <div className="flex items-center justify-between mb-2 px-1">
+              <span className="text-sm text-gray-500">{totalItems} item{totalItems > 1 ? 's' : ''} selected</span>
+              <span className="text-sm font-bold text-gray-800">${totalAmount.toFixed(2)}</span>
             </div>
-            <span className="font-bold">${totalAmount.toFixed(2)} →</span>
-          </button>
+            <button onClick={goToOrder}
+              className="w-full bg-orange-500 text-white rounded-2xl py-4 font-bold text-base shadow-lg active:scale-95 transition flex items-center justify-center gap-2">
+              <ShoppingBag size={20} />
+              Place Order
+            </button>
+          </div>
         </div>
       )}
     </div>
