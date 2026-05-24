@@ -4,57 +4,55 @@ import { ExternalLink } from 'lucide-react'
 const GITHUB_DEVNOTES = 'https://github.com/rahulnaidu02/priya-tiffin/blob/main/DEVNOTES.md'
 
 const stack = [
-  { name: 'React 18 + Vite', role: 'Frontend + build tool', color: 'bg-blue-50 text-blue-700 border-blue-200' },
-  { name: 'Tailwind CSS v4', role: 'Styling (utility-first)', color: 'bg-cyan-50 text-cyan-700 border-cyan-200' },
-  { name: 'React Router v6', role: 'Client-side routing', color: 'bg-blue-50 text-blue-700 border-blue-200' },
-  { name: 'Supabase', role: 'PostgreSQL DB + image storage', color: 'bg-green-50 text-green-700 border-green-200' },
-  { name: 'vite-plugin-pwa', role: 'PWA + service worker', color: 'bg-purple-50 text-purple-700 border-purple-200' },
-  { name: 'Twilio', role: 'SMS pickup reminders', color: 'bg-red-50 text-red-700 border-red-200' },
-  { name: 'Vercel', role: 'Hosting + auto-deploys', color: 'bg-gray-50 text-gray-700 border-gray-200' },
-  { name: 'GitHub', role: 'Version control + CI/CD trigger', color: 'bg-gray-50 text-gray-700 border-gray-200' },
-  { name: 'date-fns', role: 'Timezone-safe date formatting', color: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
-  { name: 'Lucide React', role: 'Icon set', color: 'bg-orange-50 text-orange-700 border-orange-200' },
-  { name: 'react-hot-toast', role: 'Toast notifications', color: 'bg-pink-50 text-pink-700 border-pink-200' },
-  { name: 'browser-image-compression', role: 'Compress images before upload', color: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+  {
+    group: 'Frontend',
+    items: [
+      { name: 'React 18', role: 'UI component framework', color: 'bg-blue-50 text-blue-700 border-blue-200' },
+      { name: 'Vite', role: 'Build tool and dev server', color: 'bg-blue-50 text-blue-700 border-blue-200' },
+      { name: 'Tailwind CSS v4', role: 'Utility-first styling', color: 'bg-cyan-50 text-cyan-700 border-cyan-200' },
+      { name: 'React Router v6', role: 'Client-side routing', color: 'bg-blue-50 text-blue-700 border-blue-200' },
+      { name: 'vite-plugin-pwa', role: 'PWA manifest and service worker', color: 'bg-purple-50 text-purple-700 border-purple-200' },
+    ],
+  },
+  {
+    group: 'Backend and Data',
+    items: [
+      { name: 'Supabase', role: 'PostgreSQL database and image storage', color: 'bg-green-50 text-green-700 border-green-200' },
+    ],
+  },
+  {
+    group: 'Hosting and Deploy',
+    items: [
+      { name: 'Vercel', role: 'Hosting, CDN, and auto-deploys', color: 'bg-gray-800 text-white border-gray-700' },
+      { name: 'GitHub', role: 'Version control and deploy trigger', color: 'bg-gray-50 text-gray-700 border-gray-300' },
+    ],
+  },
+  {
+    group: 'Integrations',
+    items: [
+      { name: 'Twilio', role: 'SMS pickup reminders to customers', color: 'bg-red-50 text-red-700 border-red-200' },
+    ],
+  },
+  {
+    group: 'Libraries used in the codebase',
+    items: [
+      { name: 'date-fns', role: 'Timezone-safe date formatting', color: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
+      { name: 'Lucide React', role: 'Icon set (SVG components)', color: 'bg-orange-50 text-orange-700 border-orange-200' },
+      { name: 'react-hot-toast', role: 'Toast notifications', color: 'bg-pink-50 text-pink-700 border-pink-200' },
+      { name: 'browser-image-compression', role: 'Compress photos before upload', color: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+    ],
+  },
 ]
 
-const decisions = [
-  {
-    title: 'Share token = customer gate',
-    did: 'URL token as access control — no login for customers',
-    didnt: 'Accounts, OAuth, email login',
-    why: 'Colony customers just need a WhatsApp link. No signup friction.',
-  },
-  {
-    title: 'UTC ISO deadline storage',
-    did: 'Convert local time → UTC ISO before saving to Supabase',
-    didnt: 'Store raw "2026-06-01T17:42" string',
-    why: 'Raw string treated as UTC by Supabase → 6-hour display bug. ISO + timezone conversion fixes it everywhere.',
-  },
-  {
-    title: 'vercel.json SPA rewrite',
-    did: 'Rewrite all paths to index.html on Vercel',
-    didnt: 'Hash-based routing (#/path)',
-    why: 'Clean shareable URLs for WhatsApp. Without this, /m/token returns 404 on direct access.',
-  },
-  {
-    title: 'Client-side image compression',
-    did: 'Compress before upload using browser-image-compression',
-    didnt: 'Upload raw phone photos (3–8 MB each)',
-    why: 'Supabase free tier = 1 GB storage. Phone photos need to be under 200 KB.',
-  },
-  {
-    title: 'Per-item max 3 (not cart cap)',
-    did: 'Max 3 quantity per individual dish',
-    didnt: 'Total cart limit of 3',
-    why: 'User said: "3 of the same dish" — not "only 3 things total". Cart has no hard cap.',
-  },
-  {
-    title: 'sessionStorage for cart + auth',
-    did: 'Cart and admin auth in sessionStorage',
-    didnt: 'localStorage or cookies',
-    why: 'Clears automatically when tab closes. No stale cart from last week, no lingering admin session.',
-  },
+const metrics = [
+  { label: 'Orders per week', desc: 'Total orders placed per published week', color: 'bg-blue-50 border-blue-200 text-blue-800' },
+  { label: 'Revenue per week', desc: 'Sum of total_amount across all orders', color: 'bg-green-50 border-green-200 text-green-800' },
+  { label: 'Payment collected %', desc: 'Orders marked Paid vs. total orders', color: 'bg-green-50 border-green-200 text-green-800' },
+  { label: 'No-show rate', desc: 'Orders marked No-show vs. total orders', color: 'bg-red-50 border-red-200 text-red-800' },
+  { label: 'Most ordered items', desc: 'Items by order_items quantity across weeks', color: 'bg-orange-50 border-orange-200 text-orange-800' },
+  { label: 'Repeat customer rate', desc: 'Phones that appear in more than one week', color: 'bg-purple-50 border-purple-200 text-purple-800' },
+  { label: 'Average order value', desc: 'Total revenue divided by number of orders', color: 'bg-yellow-50 border-yellow-200 text-yellow-800' },
+  { label: 'SMS opt-in rate', desc: 'Orders where sms_reminders = true', color: 'bg-cyan-50 border-cyan-200 text-cyan-800' },
 ]
 
 function Arrow() {
@@ -68,7 +66,7 @@ function Arrow() {
   )
 }
 
-function FlowBox({ label, sub, color = 'bg-white border-gray-200' }) {
+function Box({ label, sub, color = 'bg-white border-gray-200' }) {
   return (
     <div className={`border rounded-xl px-4 py-2.5 mx-auto max-w-xs text-center ${color}`}>
       <p className="text-sm font-semibold text-gray-800">{label}</p>
@@ -78,8 +76,6 @@ function FlowBox({ label, sub, color = 'bg-white border-gray-200' }) {
 }
 
 export default function DevInfo() {
-  const navigate = useNavigate()
-
   return (
     <div className="p-4 max-w-lg mx-auto pb-8">
 
@@ -87,7 +83,7 @@ export default function DevInfo() {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-xl font-bold text-gray-800">Dev Notes</h2>
-          <p className="text-xs text-gray-400">Internal only — not visible to customers</p>
+          <p className="text-xs text-gray-400">Internal view</p>
         </div>
         <a
           href={GITHUB_DEVNOTES}
@@ -99,88 +95,98 @@ export default function DevInfo() {
         </a>
       </div>
 
+      {/* Architecture Flow */}
+      <div className="bg-white rounded-2xl p-4 shadow-sm mb-4">
+        <h3 className="font-bold text-gray-800 mb-4">Architecture Flow</h3>
+
+        {/* Deploy pipeline */}
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Deploy Pipeline</p>
+        <Box label="Code pushed to GitHub" sub="rahulnaidu02/priya-tiffin (main branch)" color="bg-gray-50 border-gray-200" />
+        <Arrow />
+        <Box label="Vercel detects push" sub="Auto-builds React app in ~60 seconds" color="bg-gray-800 border-gray-700 [&_p]:text-white [&_.text-gray-400]:text-gray-300" />
+        <Arrow />
+        <Box label="Live at priya-tiffin.vercel.app" sub="Served globally via Vercel CDN" color="bg-gray-50 border-gray-200" />
+
+        <div className="border-t border-dashed border-gray-200 my-4" />
+
+        {/* App runtime */}
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">App Runtime</p>
+        <Box label="Priya creates weekly menu" sub="Items, photos, deadline, Venmo/Zelle" color="bg-orange-50 border-orange-200" />
+        <Arrow />
+        <Box label="Supabase (PostgreSQL)" sub="weeks + menu_items tables" color="bg-green-50 border-green-200" />
+        <Arrow />
+        <Box label="Publish generates share token" sub="One unique link per week" color="bg-orange-50 border-orange-200" />
+        <Arrow />
+        <Box label="Customer opens WhatsApp link" sub="No install, no login" color="bg-white border-gray-200" />
+        <Arrow />
+        <Box label="Browse, add to cart, place order" sub="Name, phone, SMS opt-in" color="bg-white border-gray-200" />
+        <Arrow />
+        <Box label="Order saved to Supabase" sub="orders + order_items tables" color="bg-green-50 border-green-200" />
+
+        <div className="grid grid-cols-2 gap-2 mt-2">
+          <div>
+            <Arrow />
+            <div className="border rounded-xl px-3 py-2 text-center bg-white border-gray-200">
+              <p className="text-xs font-semibold text-gray-700">Customer sees confirmation</p>
+              <p className="text-xs text-gray-400 mt-0.5">Pickup days and payment info</p>
+            </div>
+          </div>
+          <div>
+            <Arrow />
+            <div className="border rounded-xl px-3 py-2 text-center bg-orange-50 border-orange-200">
+              <p className="text-xs font-semibold text-gray-700">Priya sees new order</p>
+              <p className="text-xs text-gray-400 mt-0.5">Admin dashboard updates</p>
+            </div>
+          </div>
+        </div>
+
+        <Arrow />
+        <Box label="Mark Paid and Picked up" sub="PaymentTracker per customer" color="bg-orange-50 border-orange-200" />
+        <Arrow />
+        <Box label="Archive week" sub="Items saved to reuse library" color="bg-purple-50 border-purple-200" />
+
+        {/* Side services */}
+        <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-2 gap-2">
+          <div className="bg-green-50 border border-green-200 rounded-xl p-2.5 text-center">
+            <p className="text-xs font-bold text-green-700">Supabase Storage</p>
+            <p className="text-xs text-green-500">Menu photos via CDN public URLs</p>
+          </div>
+          <div className="bg-red-50 border border-red-200 rounded-xl p-2.5 text-center">
+            <p className="text-xs font-bold text-red-700">Twilio SMS</p>
+            <p className="text-xs text-red-500">Pickup reminders to customer phones</p>
+          </div>
+        </div>
+      </div>
+
       {/* Tech Stack */}
       <div className="bg-white rounded-2xl p-4 shadow-sm mb-4">
         <h3 className="font-bold text-gray-800 mb-3">Tech Stack</h3>
-        <div className="grid grid-cols-2 gap-2">
-          {stack.map(s => (
-            <div key={s.name} className={`border rounded-xl p-2.5 ${s.color}`}>
-              <p className="text-xs font-bold">{s.name}</p>
-              <p className="text-xs opacity-70 mt-0.5">{s.role}</p>
+        <div className="space-y-3">
+          {stack.map(group => (
+            <div key={group.group}>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1.5">{group.group}</p>
+              <div className="grid grid-cols-2 gap-1.5">
+                {group.items.map(s => (
+                  <div key={s.name} className={`border rounded-xl p-2.5 ${s.color}`}>
+                    <p className="text-xs font-bold">{s.name}</p>
+                    <p className="text-xs opacity-70 mt-0.5">{s.role}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Architecture Flow */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm mb-4">
-        <h3 className="font-bold text-gray-800 mb-4">Architecture Flow</h3>
-
-        <FlowBox label="Priya creates weekly menu" sub="MenuBuilder → items, deadline, Venmo/Zelle" color="bg-orange-50 border-orange-200" />
-        <Arrow />
-        <FlowBox label="Supabase (PostgreSQL)" sub="weeks + menu_items tables" color="bg-green-50 border-green-200" />
-        <Arrow />
-        <FlowBox label="Publish → share_token generated" sub="One unique link per week" color="bg-orange-50 border-orange-200" />
-        <Arrow />
-        <FlowBox label="WhatsApp link shared" sub="priya-tiffin.vercel.app/m/{token}" color="bg-blue-50 border-blue-200" />
-        <Arrow />
-        <FlowBox label="Customer opens on phone" sub="No install, no login needed" color="bg-white border-gray-200" />
-        <Arrow />
-        <FlowBox label="Browse → Cart → Order Form" sub="Name + phone, SMS opt-in" color="bg-white border-gray-200" />
-        <Arrow />
-        <FlowBox label="Order saved to Supabase" sub="orders + order_items tables" color="bg-green-50 border-green-200" />
-
-        <div className="grid grid-cols-2 gap-2 mt-2">
-          <div>
-            <Arrow />
-            <FlowBox label="Customer sees confirmation" sub="Pickup days + payment info" color="bg-white border-gray-200" />
-          </div>
-          <div>
-            <Arrow />
-            <FlowBox label="Admin Dashboard updates" sub="Priya sees new order" color="bg-orange-50 border-orange-200" />
-          </div>
-        </div>
-
-        <Arrow />
-        <FlowBox label="Mark Paid / Picked up / No-show" sub="PaymentTracker" color="bg-orange-50 border-orange-200" />
-        <Arrow />
-        <FlowBox label="Archive week → Item Library" sub="Dishes saved for reuse next week" color="bg-purple-50 border-purple-200" />
-
-        {/* Side connections */}
-        <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-2 gap-2">
-          <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-2.5 text-center">
-            <p className="text-xs font-bold text-indigo-700">Supabase Storage</p>
-            <p className="text-xs text-indigo-500">Images → CDN public URLs</p>
-          </div>
-          <div className="bg-red-50 border border-red-200 rounded-xl p-2.5 text-center">
-            <p className="text-xs font-bold text-red-700">Twilio SMS</p>
-            <p className="text-xs text-red-500">Pickup reminders → customer phone</p>
-          </div>
-        </div>
-        <div className="mt-2 bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-center">
-          <p className="text-xs font-bold text-gray-700">Deploy pipeline</p>
-          <p className="text-xs text-gray-500">git push → GitHub → Vercel auto-build → live in ~60 sec</p>
-        </div>
-      </div>
-
-      {/* Key Decisions */}
+      {/* Metrics */}
       <div className="bg-white rounded-2xl p-4 shadow-sm">
-        <h3 className="font-bold text-gray-800 mb-3">Key Technical Decisions</h3>
-        <div className="space-y-3">
-          {decisions.map(d => (
-            <div key={d.title} className="border border-gray-100 rounded-xl p-3">
-              <p className="text-xs font-bold text-gray-800 mb-1.5">{d.title}</p>
-              <div className="grid grid-cols-2 gap-2 mb-1.5">
-                <div className="bg-green-50 rounded-lg px-2 py-1.5">
-                  <p className="text-xs text-green-600 font-semibold mb-0.5">Did ✓</p>
-                  <p className="text-xs text-green-800">{d.did}</p>
-                </div>
-                <div className="bg-red-50 rounded-lg px-2 py-1.5">
-                  <p className="text-xs text-red-500 font-semibold mb-0.5">Skipped ✗</p>
-                  <p className="text-xs text-red-700">{d.didnt}</p>
-                </div>
-              </div>
-              <p className="text-xs text-gray-500 italic">{d.why}</p>
+        <h3 className="font-bold text-gray-800 mb-1">Metrics to Track</h3>
+        <p className="text-xs text-gray-400 mb-3">Key signals for the business, all queryable from Supabase</p>
+        <div className="grid grid-cols-2 gap-2">
+          {metrics.map(m => (
+            <div key={m.label} className={`border rounded-xl p-2.5 ${m.color}`}>
+              <p className="text-xs font-bold">{m.label}</p>
+              <p className="text-xs opacity-70 mt-0.5">{m.desc}</p>
             </div>
           ))}
         </div>
