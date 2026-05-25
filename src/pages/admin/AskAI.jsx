@@ -58,7 +58,7 @@ export default function AskAI() {
           <h2 className="text-xl font-bold text-gray-800">Ask AI</h2>
         </div>
         <p className="text-xs text-gray-400 mt-1">
-          Natural-language questions about your live Supabase data
+          Natural-language questions about your live Supabase data. Admin only (not visible to customers).
         </p>
       </div>
 

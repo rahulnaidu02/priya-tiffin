@@ -83,7 +83,7 @@ export default function DevInfo() {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-xl font-bold text-gray-800">Dev Notes</h2>
-          <p className="text-xs text-gray-400">Internal view</p>
+          <p className="text-xs text-gray-400">Admin only (not visible to customers)</p>
         </div>
         <a
           href={GITHUB_DEVNOTES}
